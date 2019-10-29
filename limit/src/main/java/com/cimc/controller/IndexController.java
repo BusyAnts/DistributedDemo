@@ -1,5 +1,6 @@
 package com.cimc.controller;
 
+import com.cimc.annotation.ExtRateLimiter;
 import com.cimc.service.OrderService;
 import com.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class IndexController {
     /**
      * 1.0 表示 每秒中生成1个令牌存放在桶中
      */
-    RateLimiter rateLimiter = RateLimiter.create(1.0);
+    private static final RateLimiter rateLimiter = RateLimiter.create(1.0);
 
     /**
      * 下单请求
@@ -41,6 +42,16 @@ public class IndexController {
         }
 
         // 2.如果没有达到限流的要求,直接调用订单接口
+        boolean isOrderAdd = orderService.addOrder();
+        if (isOrderAdd) {
+            return "恭喜您,抢购成功!";
+        }
+        return "抢购失败!";
+    }
+
+    @RequestMapping("/order2")
+    @ExtRateLimiter(value = 1.0, timeout = 500)
+    public String order2() {
         boolean isOrderAdd = orderService.addOrder();
         if (isOrderAdd) {
             return "恭喜您,抢购成功!";
